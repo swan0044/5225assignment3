@@ -20,22 +20,26 @@ const UploadPage: React.FC = () => {
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64Image = (reader.result as string).split(',')[1]; // 确保去掉前缀
-      const body = JSON.stringify({
-        body: JSON.stringify({ to_upload_image: base64Image }),
+      const body = {
+        body: JSON.stringify({
+          to_upload_image: base64Image
+        }),
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('idToken')}`
         },
-        httpMethod: "POST",
-        path: "/image-upload"
-      });
+        method: 'POST',
+        path: '/upload'
+      };
 
       try {
         const response = await fetch('https://4h60uq9dkf.execute-api.us-east-1.amazonaws.com/dev/upload', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionStorage.getItem('idToken')}`
           },
-          body: body
+          body: JSON.stringify(body)
         });
         const data = await response.json();
         setMessage('Upload successful');

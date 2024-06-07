@@ -4,6 +4,7 @@ import numpy as np
 import os
 import json
 from collections import Counter
+from urllib.parse import unquote
 
 s3 = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
@@ -112,9 +113,15 @@ def lambda_handler(event, context):
         source_bucket = event["Records"][0]["s3"]["bucket"]["name"]
         source_key = event["Records"][0]["s3"]["object"]["key"]
 
+        # 对 key 进行 URL 解码
+        source_key = unquote(source_key)
+
         # 提取原图的 key（缩略图路径是 'thumbnails/'，去掉前缀以获得原图的 key）
         original_key = source_key.replace("thumbnails/", "")
-        download_path = "/tmp/{}".format(original_key)
+        download_path = f"/tmp/{os.path.basename(original_key)}"
+
+        # 提取用户邮箱
+        user_email = original_key.split("/")[0].split("/")[0]
 
         # 下载原图文件
         s3.download_file(original_bucket_name, original_key, download_path)
@@ -138,6 +145,7 @@ def lambda_handler(event, context):
         table.put_item(
             Item={
                 "ImageID": original_key,
+                "UserEmail": user_email,
                 "Tags": tags_json,
                 "ImageURL": image_url,
                 "ThumbnailURL": thumbnail_url,
